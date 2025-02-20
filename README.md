@@ -5,9 +5,10 @@ Note this project is a WIP and might be not stable.
 
 # Installation
 
+### rust-bitcoin
+
 Change the `RUST_TARGET` according to your architecture.
 
-### rust-bitcoin
 ```bash
 export RUST_TARGET="aarch64-apple-darwin"
 cd modules/rustbitcoin
