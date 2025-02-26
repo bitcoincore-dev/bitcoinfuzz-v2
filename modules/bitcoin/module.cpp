@@ -287,7 +287,6 @@ std::optional<std::string> Bitcoin::script_asm(std::span<const uint8_t> buffer) 
 {
     CScript script(buffer.begin(), buffer.end());
     if (script.empty() || !script.HasValidOps()) return std::nullopt;
-    std::cout << HexStr(script) << std::endl;
     auto asm_str = ScriptToAsmStr(script);
     if (asm_str.find("[error]") != std::string::npos) return std::nullopt;
     return asm_str;
