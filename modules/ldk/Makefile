@@ -1,9 +1,10 @@
 all: module.a
 
-CXXFLAGS += -Wall -Wextra -std=c++20 -I ../../include
-# MacOS: ./ldk_lib/target/aarch64-apple-darwin/release/libldk_lib.a
-LDK_LIB_PATH := ./ldk_lib/target/$(RUST_TARGET)/release/libldk_lib.a
-LDK_LIB_NAME := libldk_lib.a
+CXXFLAGS += -Wall -Wextra -fsanitize=address,fuzzer -std=c++20 -I ../../include
+LDK_LIB_PATH := ./ldk_lib/target/release/libldk_lib.a
+
+cargo:
+	cd ldk_lib && RUSTFLAGS="-Z sanitizer=address" cargo build --release
 
 module.a: module.o $(LDK_LIB_PATH)
 	bash ../../merge.sh module.a $(LDK_LIB_PATH) module.o
