@@ -5,7 +5,7 @@ Note this project is a WIP and might be not stable.
 
 # Installation
 
-## BitcoinFuzz start modules:
+## Bitcoin modules:
 
 ### rust-bitcoin
 
@@ -50,15 +50,13 @@ export CXXFLAGS="$CXXFLAGS -DBITCOIN_CORE"
 export BOOST_LIB_DIR="path/to/boost/"
 ```
 
-## LightningFuzz start modules:
+## Lightning modules:
 
 ### LDK
 
 ```bash
-export RUST_TARGET="aarch64-apple-darwin"
 cd modules/ldk
-cd ldk_lib && cargo build --release --target=$RUST_TARGET
-cd .. && make
+make cargo && make
 export CXXFLAGS="$CXXFLAGS -DLDK"
 ```
 
