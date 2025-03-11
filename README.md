@@ -5,6 +5,45 @@ Note this project is a WIP and might be not stable.
 
 # Installation
 
+## Dependencies
+
+### llvm toolset (clang and libfuzzer)
+
+* To support the flags used in some modules `-fsanitize=address,fuzzer -std=c++20` the minimum clang version required is 10.0
+
+* For macOS the llvm tools are installed by default, just check that you have the minimum required version 10.0
+
+    * If not installed or lesser than 10.0 just run:
+
+        ```
+        brew install llvm
+        ```
+
+
+* For ubuntu/debian it can be installed using the package manager:
+    ```
+    sudo apt install clang lld llvm-dev
+    ```
+
+* To install it from source check [clang_get_started](https://clang.llvm.org/get_started.html). You must build it with this cmake option: `-DLLVM_ENABLE_PROJECTS="clang;lld;compiler-rt"`
+
+
+### boost
+
+To build the bitcoin core module the boost library is required. Minimum version 
+
+The module uses only libboost-filesystem and libboost-system modules. For ubuntu you can install with:
+
+```
+sudo apt install libboost-filesystem-dev libboost-system-dev
+```
+
+Or install the complete boost library with 
+```
+sudo apt install libboost-all-dev
+```
+
+
 ## Bitcoin modules:
 
 ### rust-bitcoin
