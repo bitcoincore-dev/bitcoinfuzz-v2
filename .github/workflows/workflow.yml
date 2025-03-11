@@ -26,6 +26,11 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "stable"
+      
+      - name: Install .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
 
       - name: Install LLVM and Clang
         run: |
@@ -55,6 +60,43 @@ jobs:
           export CXX=/usr/bin/clang++
           rustup default nightly
           cd modules/rustbitcoin && make cargo && make
+
+      - name: Build - rust miniscript
+        timeout-minutes: 5
+        run: |
+          export CC=/usr/bin/clang
+          export CXX=/usr/bin/clang++
+          rustup default nightly
+          cd modules/rustminiscript && make cargo && make
+
+      - name: Build - btcd
+        timeout-minutes: 5
+        run: |
+          export CC=/usr/bin/clang
+          export CXX=/usr/bin/clang++
+          cd modules/btcd && make
+      
+      - name: Build - lnd
+        timeout-minutes: 5
+        run: |
+          export CC=/usr/bin/clang
+          export CXX=/usr/bin/clang++
+          cd modules/lnd && make
+          
+      - name: Build - ldk
+        timeout-minutes: 5
+        run: |
+          export CC=/usr/bin/clang
+          export CXX=/usr/bin/clang++
+          rustup default nightly
+          cd modules/ldk && make cargo && make
+
+      - name: Build - nlightning
+        timeout-minutes: 5
+        run: |
+          export CC=/usr/bin/clang
+          export CXX=/usr/bin/clang++
+          cd modules/nlightning && make
 
       - name: Build - bitcoinfuzz
         timeout-minutes: 5
