@@ -123,7 +123,7 @@ namespace bitcoinfuzz
         std::span<const uint8_t> buffer{data, size};
         if (target == "script") {
             this->ScriptTarget(buffer);
-        } else if (target == "block_deserialization") {
+        } else if (target == "deserialize_block") {
             this->BlockDeserializationTarget(buffer);
         } else if (target == "script_eval") {
             this->ScriptEvalTarget(buffer);
@@ -133,7 +133,7 @@ namespace bitcoinfuzz
 	        this->MiniscriptParseTarget(buffer);
         } else if (target == "script_asm") {
             this->ScriptAsmTarget(buffer);
-	    } else if (target == "invoice_deserialization") {
+	    } else if (target == "deserialize_invoice") {
             this->InvoiceDeserializationTarget(buffer);
         }else {
             std::cout << "Target not defined!" << std::endl;
