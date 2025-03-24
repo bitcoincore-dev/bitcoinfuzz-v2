@@ -1,5 +1,6 @@
 from io import BytesIO
 from embit.descriptor.miniscript import Miniscript
+from embit.descriptor import Descriptor
 
 def miniscript_parse(input):
     try:
@@ -13,3 +14,10 @@ def miniscript_parse(input):
             return True
         except Exception as _:
             return False
+        
+def descriptor_parse(input):
+    try:
+        desc = Descriptor.from_string(input)
+        return True
+    except Exception as _:
+        return False
