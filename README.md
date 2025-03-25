@@ -151,7 +151,8 @@ FUZZ=target_name ./bitcoinfuzz
 - rust-bitcoin: https://github.com/rust-bitcoin/rust-bitcoin/issues/2879
 - btcd: https://github.com/btcsuite/btcd/issues/2199
 - rust-bitcoin: https://github.com/brunoerg/bitcoinfuzz/issues/57
-- rust-bitcoin: CVE-2024-44073
+- rust-miniscript: CVE-2024-44073
 - rust-miniscript: https://github.com/rust-bitcoin/rust-miniscript/issues/785
 - rust-miniscript: https://github.com/rust-bitcoin/rust-miniscript/issues/788
 - LND: https://github.com/lightningnetwork/lnd/issues/9591
+- Embit: https://github.com/diybitcoinhardware/embit/issues/70
