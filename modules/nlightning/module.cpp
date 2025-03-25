@@ -32,7 +32,9 @@ namespace bitcoinfuzz
 {
     namespace module
     {
+        FreeStringFunc NLightning::freeString = nullptr;
         DecodeInvoiceFunc NLightning::decodeInvoice = nullptr;
+        CleanupResources NLightning::cleanupResources = nullptr;
 
         NLightning::NLightning(void) : BaseModule("NLightning")
         {
@@ -69,11 +71,43 @@ namespace bitcoinfuzz
                 CLOSE_LIBRARY(libHandle);
                 return;
             }
+
+            if (freeString == nullptr)
+                freeString = (FreeStringFunc)GET_PROC_ADDRESS(libHandle, "FreeString");
+
+            if (!freeString)
+            {
+                std::cerr << "Failed to find FreeString symbol" << std::endl;
+                CLOSE_LIBRARY(libHandle);
+                return;
+            }
+
+            if (cleanupResources == nullptr)
+                cleanupResources = (CleanupResources)GET_PROC_ADDRESS(libHandle, "CleanupResources");
+
+            if (!cleanupResources)
+            {
+                std::cerr << "Failed to find CleanupResources symbol" << std::endl;
+                CLOSE_LIBRARY(libHandle);
+                return;
+            }
         }
 
-        std::optional<bool> NLightning::deserialize_invoice(std::string str) const
+        std::optional<std::string> NLightning::deserialize_invoice(std::string str) const
         {
-            return decodeInvoice(str.c_str());
+            char* result = decodeInvoice(str.c_str());
+            
+            if (result == nullptr) {
+                cleanupResources();
+                return std::nullopt;
+            }
+            
+            std::string resultStr(result);
+            freeString(result);
+            cleanupResources();
+           
+            
+            return resultStr;
         }
     }
 }

@@ -1,32 +1,104 @@
-use lightning_invoice::Currency;
+use lightning_invoice::{
+    Bolt11InvoiceDescriptionRef, Bolt11SemanticError, Currency, ParseOrSemanticError,
+};
+use std::ffi::CString;
+use std::os::raw::c_char;
 use std::{ffi::CStr, str::FromStr};
 
+unsafe fn str_to_c_string(input: &str) -> *mut c_char {
+    CString::new(input).unwrap().into_raw()
+}
+
 #[no_mangle]
-pub unsafe extern "C" fn ldk_des_invoice(input: *const std::os::raw::c_char) -> bool {
+pub unsafe extern "C" fn ldk_des_invoice(input: *const std::os::raw::c_char) -> *mut c_char {
     if input.is_null() {
-        return false;
+        return str_to_c_string("");
     }
 
     // Convert C string to Rust string
     let c_str = match CStr::from_ptr(input).to_str() {
         Ok(s) => s,
-        Err(_) => return false,
+        Err(_) => return str_to_c_string(""),
     };
 
-    match lightning_invoice::SignedRawBolt11Invoice::from_str(c_str) {
+    match lightning_invoice::Bolt11Invoice::from_str(c_str) {
         Ok(invoice) => {
-            // If the destination pubkey was provided as a tagged field, use that
-            // to verify the signature, otherwise recover it from the signature
-            let is_signature_valid = if let Some(_) = invoice.payee_pub_key() {
-                invoice.check_signature()
-            } else {
-                invoice.recover_payee_pub_key().is_ok()
-            };
-            let is_currency_bitcoin = invoice.currency() == Currency::Bitcoin;
-            let has_payment_hash = invoice.payment_hash().is_some();
+            if invoice.currency() != Currency::Bitcoin {
+                return str_to_c_string("");
+            }
+            let mut result = String::new();
 
-            has_payment_hash && is_currency_bitcoin && is_signature_valid
+            result.push_str("HASH=");
+            result.push_str(&invoice.payment_hash().to_string());
+
+            result.push_str(";AMOUNT=");
+            if let Some(amount) = invoice.amount_milli_satoshis() {
+                result.push_str(&amount.to_string());
+            }
+
+            result.push_str(";DESCRIPTION=");
+            if let Bolt11InvoiceDescriptionRef::Direct(direct_description) = invoice.description() {
+                result.push_str(&direct_description.to_string());
+            }
+
+            let invoice_payee_pub_key = match invoice.payee_pub_key() {
+                Some(payee) => payee.clone(),
+                None => invoice.recover_payee_pub_key(),
+            };
+
+            result.push_str(";RECIPIENT=");
+            result.push_str(&invoice_payee_pub_key.to_string());
+
+            result.push_str(";EXPIRY=");
+            result.push_str(&invoice.expiry_time().as_secs().to_string());
+
+            result.push_str(";TIMESTAMP=");
+            result.push_str(
+                &invoice
+                    .clone()
+                    .into_signed_raw()
+                    .raw_invoice()
+                    .data
+                    .timestamp
+                    .as_unix_timestamp()
+                    .to_string(),
+            );
+
+            result.push_str(";ROUTING_HINTS=");
+            result.push_str(&invoice.private_routes().len().to_string());
+
+            result.push_str(";MIN_CLTV=");
+            result.push_str(&invoice.min_final_cltv_expiry_delta().to_string());
+
+            str_to_c_string(&result)
         }
-        Err(_) => false,
+        // Handle invoices without payment secrets by returning null
+        // This is needed because some Lightning implementations don't require payment secrets,
+        // and we need to maintain compatibility with these implementations
+        Err(ParseOrSemanticError::SemanticError(Bolt11SemanticError::NoPaymentSecret)) => {
+            std::ptr::null_mut()
+        }
+        // Handle invoices with multiple payment hashes by returning null
+        // This is needed because some Lightning implementations don't require payment to have only one hash,
+        // and we need to maintain compatibility with these implementations
+        Err(ParseOrSemanticError::SemanticError(Bolt11SemanticError::MultiplePaymentHashes)) => {
+            std::ptr::null_mut()
+        }
+        // Handle invoices with multiple descriptions hashes by returning null
+        // This is needed because some Lightning implementations don't require to have only one description,
+        // and we need to maintain compatibility with these implementations
+        Err(ParseOrSemanticError::SemanticError(Bolt11SemanticError::MultipleDescriptions)) => {
+            std::ptr::null_mut()
+        }
+        Err(_) => str_to_c_string(""),
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn ldk_free_string(ptr: *mut c_char) {
+    if !ptr.is_null() {
+        unsafe {
+            let _ = CString::from_raw(ptr);
+        }
     }
 }
