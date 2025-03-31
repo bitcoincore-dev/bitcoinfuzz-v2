@@ -2,26 +2,80 @@ using System.Runtime.InteropServices;
 
 namespace NLightning.CppBridge.Bolts.BOLT11;
 
+using System.Text;
 using NLightning.Bolts.BOLT11;
 public static class InvoiceBridge
 {
     [UnmanagedCallersOnly(EntryPoint = "DecodeInvoice")]
-    public static bool DecodeInvoice(IntPtr invoiceStringPtr)
+    public static IntPtr DecodeInvoice(IntPtr invoiceStringPtr)
     {
         try
         {
             string? invoiceString = Marshal.PtrToStringUTF8(invoiceStringPtr);
             if (string.IsNullOrEmpty(invoiceString))
             {
-                return false;
+                return CreateEmptyStringPtr();
             }
 
-            _ = Invoice.Decode(invoiceString);
-            return true;
+            Invoice invoice = Invoice.Decode(invoiceString);
+
+            StringBuilder resultBuilder = new();
+
+            resultBuilder.Append("HASH=").Append(invoice.PaymentHash);
+            resultBuilder.Append(";AMOUNT=").Append(invoice.AmountMilliSats);
+            resultBuilder.Append(";DESCRIPTION=").Append(invoice.Description);
+            resultBuilder.Append(";RECIPIENT=").Append(invoice.PayeePubKey);
+            resultBuilder.Append(";EXPIRY=").Append((int)(invoice.ExpiryDate - DateTimeOffset.FromUnixTimeSeconds(invoice.Timestamp)).TotalSeconds);
+            resultBuilder.Append(";TIMESTAMP=").Append(invoice.Timestamp);
+            resultBuilder.Append(";ROUTING_HINTS=").Append(invoice.RoutingInfos?.Count ?? 0);
+            resultBuilder.Append(";MIN_CLTV=").Append(invoice.MinFinalCltvExpiry);
+
+            string result = resultBuilder.ToString();
+
+            // Manually allocate unmanaged memory for the UTF-8 string
+            byte[] resultBytes = Encoding.UTF8.GetBytes(result);
+            IntPtr resultPtr = Marshal.AllocHGlobal(resultBytes.Length + 1); // +1 for null terminator
+
+            // Copy the UTF-8 bytes to unmanaged memory
+            Marshal.Copy(resultBytes, 0, resultPtr, resultBytes.Length);
+
+            // Null-terminate the string
+            Marshal.WriteByte(resultPtr + resultBytes.Length, 0);
+
+            return resultPtr;
         }
         catch
         {
-            return false;
+            return CreateEmptyStringPtr();
         }
+    }
+
+    private static IntPtr CreateEmptyStringPtr()
+    {
+        // Allocate memory for just a null terminator (empty string)
+        IntPtr emptyStringPtr = Marshal.AllocHGlobal(1);
+        Marshal.WriteByte(emptyStringPtr, 0);
+        return emptyStringPtr;
+    }
+
+    [UnmanagedCallersOnly(EntryPoint = "FreeString")]
+    public static void FreeString(IntPtr stringPtr)
+    {
+        if (stringPtr != IntPtr.Zero)
+        {
+            Marshal.FreeHGlobal(stringPtr);
+        }
+    }
+
+    [UnmanagedCallersOnly(EntryPoint = "CleanupResources")]
+    public static void CleanupResources()
+    {
+        // Force garbage collection to clean up any managed resources
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true);
+        GC.WaitForPendingFinalizers();
+
+        // Run a second collection to clean up finalizers
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, true, true);
+        GC.WaitForPendingFinalizers();
     }
 }
