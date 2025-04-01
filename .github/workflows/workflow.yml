@@ -155,3 +155,10 @@ jobs:
           export CXXFLAGS="-DBITCOIN_CORE -DRUST_BITCOIN"
           make
           FUZZ=address_parse ./bitcoinfuzz -runs=100
+      
+      - name: Test - psbt_parse
+        run: |
+          export CXXFLAGS="-DEMBIT -DRUST_BITCOIN -DBTCD"
+          make
+          ASAN_OPTIONS=detect_leaks=0 FUZZ=psbt_parse ./bitcoinfuzz -runs=100
+
