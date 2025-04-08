@@ -41,7 +41,7 @@
 #endif
 
 #ifdef CUSTOM_MUTATOR_BOLT11
-#include "modules/bitcoin/bech32.h"
+#include <modules/bolt11mutator/bech32.h>
 #endif
 
 std::shared_ptr<bitcoinfuzz::Driver> driver = nullptr;

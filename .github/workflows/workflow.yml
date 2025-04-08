@@ -66,6 +66,11 @@ jobs:
           export BOOST_LIB_DIR=/usr/lib/x86_64-linux-gnu/
           cd modules/bitcoin && make
 
+      - name: Build - bolt11mutator
+        timeout-minutes: 40
+        run: |
+          cd modules/bolt11mutator && make
+
       - name: Build - rust bitcoin
         timeout-minutes: 5
         run: |

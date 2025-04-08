@@ -1,0 +1,30 @@
+all: module.a
+
+CXX := clang++
+CXXFLAGS += -Wall -Wextra -std=c++20 \
+            -fsanitize=fuzzer,address \
+            -I . \
+            -I ../../include \
+            -I /opt/homebrew/include
+
+MAKE = make
+AR := ar
+
+# Automatically find all .cpp files
+BITCOIN_SRCS := $(shell find . -name "*.cpp" ! -name "bech32.cpp" ! -name "cleanse.cpp" ! -path "./univalue/*" ! -path "./secp256k1/*")
+BITCOIN_OBJS := $(BITCOIN_SRCS:.cpp=.o)
+
+module.a: bech32.o $(BITCOIN_OBJS)
+	$(AR) rcs $@ bech32.o $(BITCOIN_OBJS)
+
+bech32.o: bech32.cpp bech32.h
+	$(CXX) $(CXXFLAGS) -I . -fPIC -c bech32.cpp -o bech32.o
+
+%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -fPIC -c $< -o $@
+
+clean:
+	rm -rf *.o **/*.o module.a tmp_obj/ *_combined.o
+
+.PHONY: clean
