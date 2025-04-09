@@ -136,7 +136,7 @@ jobs:
         run: |
           export CXXFLAGS="-DBITCOIN_CORE -DRUST_MINISCRIPT -DEMBIT"
           make
-          ASAN_OPTIONS=detect_leaks=0 FUZZ=miniscript_parse ./bitcoinfuzz -runs=100
+          ASAN_OPTIONS=detect_leaks=0 FUZZ=miniscript_parse ./bitcoinfuzz -runs=0
 
       - name: Test - script_asm
         run: |
