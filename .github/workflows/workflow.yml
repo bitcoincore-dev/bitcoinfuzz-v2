@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-24.04, macos-13]
 
     steps:
       - name: Checkout repo
@@ -40,7 +40,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r modules/embit/embit_lib/requirements.txt
 
-      - name: Install LLVM and Clang
+      - name: Install LLVM and Clang - Ubuntu
+        if: matrix.os == 'ubuntu-24.04'
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
@@ -49,21 +50,49 @@ jobs:
           sudo ln -sfT clang-18 /usr/bin/clang
         shell: bash
 
-      - name: Install Boost
+      - name: Install LLVM and Clang - macOS
+        if: matrix.os == 'macos-13'
+        run: |
+          brew install llvm@18
+          echo "/usr/local/opt/llvm@18/bin" >> $GITHUB_PATH
+          export PATH="/usr/local/opt/llvm@18/bin:$PATH"
+        shell: bash
+
+      - name: Install Boost - Ubuntu
+        if: matrix.os == 'ubuntu-24.04'
         run: |
           sudo apt install libboost-all-dev
       
-      - name: Setup common environment
+      - name: Install Boost and build dependencies - macOS
+        if: matrix.os == 'macos-13'
+        run: |
+          brew install boost autoconf automake libtool pkg-config
+
+      - name: Setup common environment - Ubuntu
+        if: matrix.os == 'ubuntu-24.04'
         run: |
           export CC=/usr/bin/clang
           export CXX=/usr/bin/clang++
           echo "CC=/usr/bin/clang" >> $GITHUB_ENV
           echo "CXX=/usr/bin/clang++" >> $GITHUB_ENV
 
+      - name: Setup common environment - macOS
+        if: matrix.os == 'macos-13'
+        run: |
+          export CC=$(brew --prefix llvm@18)/bin/clang
+          export CXX=$(brew --prefix llvm@18)/bin/clang++
+          echo "CC=$(brew --prefix llvm@18)/bin/clang" >> $GITHUB_ENV
+          echo "CXX=$(brew --prefix llvm@18)/bin/clang++" >> $GITHUB_ENV
+
       - name: Build - Bitcoin Core
         timeout-minutes: 40
         run: |
-          export BOOST_LIB_DIR=/usr/lib/x86_64-linux-gnu/
+          if [ "${{ matrix.os }}" == "ubuntu-24.04" ]; then
+            export BOOST_LIB_DIR=/usr/lib/x86_64-linux-gnu/
+          elif [ "${{ matrix.os }}" == "macos-13" ]; then
+            export BOOST_LIB_DIR=$(brew --prefix boost)/lib/
+            export PATH="/usr/local/opt/autoconf/bin:/usr/local/opt/automake/bin:/usr/local/opt/libtool/bin:$PATH"
+          fi
           cd modules/bitcoin && make
 
       - name: Build - bolt11mutator
@@ -166,4 +195,3 @@ jobs:
           export CXXFLAGS="-DEMBIT -DRUST_BITCOIN -DBTCD"
           make
           ASAN_OPTIONS=detect_leaks=0 FUZZ=psbt_parse ./bitcoinfuzz -runs=100
-
