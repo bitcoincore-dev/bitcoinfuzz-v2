@@ -12,10 +12,6 @@
 #include <modules/rustbitcoin/module.h>
 #endif
 
-#ifdef MAKO
-#include <modules/mako/module.h>
-#endif
-
 #ifdef RUST_MINISCRIPT
 #include <modules/rustminiscript/module.h>
 #endif
@@ -329,9 +325,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size)
 #endif
 #ifdef RUST_BITCOIN
   driver->LoadModule(std::make_shared<bitcoinfuzz::module::Rustbitcoin>());
-#endif
-#ifdef MAKO
-  driver->LoadModule(std::make_shared<bitcoinfuzz::module::Mako>());
 #endif
 #ifdef RUST_MINISCRIPT
   driver->LoadModule(std::make_shared<bitcoinfuzz::module::Rustminiscript>());
