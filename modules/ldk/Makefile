@@ -5,7 +5,12 @@ CXXFLAGS += -Wall -Wextra -fsanitize=address,fuzzer -std=c++20 -I ../../include
 LDK_LIB_PATH := ./ldk_lib/target/release/libldk_lib.a
 
 cargo:
-	cd ldk_lib && RUSTFLAGS="-Z sanitizer=address" cargo build --release
+	cd ldk_lib && RUSTFLAGS="-Z sanitizer=address" cargo rustc --release -- -C passes='sancov-module' \
+    -C llvm-args=-sanitizer-coverage-inline-8bit-counters \
+    -C llvm-args=-sanitizer-coverage-trace-compares \
+    -C llvm-args=-sanitizer-coverage-pc-table \
+    -C llvm-args=-sanitizer-coverage-level=4 \
+    -C llvm-args=-simplifycfg-branch-fold-threshold=0
 
 module.a: module.o $(LDK_LIB_PATH)
 	bash ../../merge.sh module.a $(LDK_LIB_PATH) module.o
