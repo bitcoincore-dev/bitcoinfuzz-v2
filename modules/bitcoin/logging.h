@@ -244,7 +244,8 @@ inline void LogPrintFormatInternal(std::string_view logging_function, std::strin
     if (LogInstance().Enabled()) {
         std::string log_msg;
         try {
-            log_msg = tfm::format(fmt, args...);
+            //log_msg = tfm::format(fmt, args...);
+            log_msg = "";
         } catch (tinyformat::format_error& fmterr) {
             log_msg = "Error \"" + std::string{fmterr.what()} + "\" while formatting log message: " + fmt.fmt;
         }
