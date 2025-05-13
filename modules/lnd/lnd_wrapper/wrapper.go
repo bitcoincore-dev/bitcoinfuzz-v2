@@ -42,7 +42,16 @@ func LndDeserializeInvoice(cInvoiceStr *C.char) *C.char {
 
 	sb.WriteString(";AMOUNT=")
 	if invoice.MilliSat != nil {
-		sb.WriteString(fmt.Sprintf("%d", *invoice.MilliSat))
+		// Clear the MSB (most significant bit) to ensure compatibility with other implementations
+		// LND uses milliSatoshis and doesn't overflow with large amounts, but other
+		// implementations like LDK that use picoSatoshis will overflow when parsing
+		// extremely large values (e.g., >95M BTC). By manually clearing the MSB,
+		// we simulate the overflow behavior that would occur in those implementations,
+		// ensuring they can successfully parse the invoice without failures.
+		// This is particularly important for amounts that exceed Bitcoin's 21M supply cap,
+		// which shouldn't be valid but need to be handled consistently across implementations.
+		amountWithoutTopBit := *invoice.MilliSat & 0x7FFFFFFFFFFFFFFF
+		sb.WriteString(fmt.Sprintf("%d", amountWithoutTopBit))
 	} else {
 		sb.WriteString("0")
 	}
