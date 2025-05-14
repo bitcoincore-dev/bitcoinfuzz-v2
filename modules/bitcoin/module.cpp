@@ -357,10 +357,16 @@ std::optional<std::string> Bitcoin::addrv2_parse(std::span<const uint8_t> buffer
             if (!addr.IsRoutable()) return "clearnet=0tor=0cjdns=0i2p=0";
         }
     } catch (const std::ios_base::failure& e) {
-        // TODO: remove workaround to make it compatible with Core
+        // TODO: remove workaround to make it compatible with btcd
         return std::nullopt;
         //return "clearnet=0tor=0cjdns=0i2p=0";
     }
+
+    // Workaround since btcd doesn't support cjdns and i2p
+    #ifdef BTCD
+        cjdns = 0;
+        i2p = 0;
+    #endif
 
     return "clearnet=" + std::to_string(clearnet) + "tor=" + std::to_string(tor) +
            "cjdns=" + std::to_string(cjdns) + "i2p=" + std::to_string(i2p);
