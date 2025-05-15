@@ -49,8 +49,12 @@ pub unsafe extern "C" fn ldk_des_invoice(input: *const std::os::raw::c_char) -> 
             result.push_str(";RECIPIENT=");
             result.push_str(&invoice_payee_pub_key.to_string());
 
+            // Convert the expiry time to seconds, ensuring consistent overflow behavior
+            // with other implementations like LND. The multiplication and division by 1000000000
+            // may appear redundant, but it's intentionally mirroring the nanosecond conversion 
+            // logic used in LND to ensure the same overflow characteristics.
             result.push_str(";EXPIRY=");
-            result.push_str(&invoice.expiry_time().as_secs().to_string());
+            result.push_str(((invoice.expiry_time().as_secs() * 1000000000) / 1000000000).to_string().as_str());
 
             result.push_str(";TIMESTAMP=");
             result.push_str(

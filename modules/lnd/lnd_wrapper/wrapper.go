@@ -66,8 +66,11 @@ func LndDeserializeInvoice(cInvoiceStr *C.char) *C.char {
 		sb.WriteString(fmt.Sprintf("%x", invoice.Destination.SerializeCompressed()))
 	}
 
+	// Convert expiry from time.Duration to seconds as uint64 to ensure consistent
+	// overflow behavior across implementations. LND uses signed int64 for expiry in
+	// nanoseconds, while other implementations use uint64.
 	sb.WriteString(";EXPIRY=")
-	sb.WriteString(fmt.Sprintf("%d", int64(invoice.Expiry().Seconds())))
+	sb.WriteString(fmt.Sprintf("%d", uint64(invoice.Expiry().Nanoseconds())/1000000000))
 
 	sb.WriteString(";TIMESTAMP=")
 	sb.WriteString(fmt.Sprintf("%d", invoice.Timestamp.Unix()))
