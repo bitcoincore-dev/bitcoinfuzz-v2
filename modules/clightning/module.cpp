@@ -71,7 +71,11 @@ std::string clightning_des_invoice(const std::string& input) {
     pubkey_to_der(compressed, &key);
     result << ";RECIPIENT=" << hex_encode(compressed, 33);
 
-    result << ";EXPIRY=" << invoice->expiry;
+    // Convert the expiry time to seconds, ensuring consistent overflow behavior
+    // with other implementations like LND. The multiplication and division by 1000000000
+    // may appear redundant, but it's intentionally mirroring the nanosecond conversion 
+    // logic used in LND to ensure the same overflow characteristics.
+    result << ";EXPIRY=" << (invoice->expiry * 1000000000) / 1000000000;
     result << ";TIMESTAMP=" << invoice->timestamp;
     result << ";ROUTING_HINTS=" << tal_count(invoice->routes);
     result << ";MIN_CLTV=" << invoice->min_final_cltv_expiry;
