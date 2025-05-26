@@ -89,7 +89,10 @@ std::string clightning_des_offer(const std::string_view input) {
     char* fail = nullptr;
     const struct chainparams* params = chainparams_for_network("bitcoin");
 
-    struct tlv_offer *offer = offer_decode(tmpctx, input.data(), input.size(), nullptr, params, &fail);
+    // Get the truncated length of the string (in case it contains null bytes)
+    size_t c_string_len = strnlen(input.data(), input.size());
+
+    struct tlv_offer *offer = offer_decode(tmpctx, input.data(), c_string_len, nullptr, params, &fail);
     if (!offer) {
         clean_tmpctx();
         return "";
