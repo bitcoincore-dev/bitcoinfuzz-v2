@@ -73,6 +73,16 @@ cleanup:
     Py_XDECREF(main_module);
     Py_XDECREF(input_obj);
     
+    if (PyErr_Occurred()) {
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+    
+        
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+    }
+    
     PyGILState_Release(gstate);
     
     return return_value;
@@ -111,8 +121,8 @@ bool embit_miniscript_parse(std::string input) {
 }
 
 bool embit_descriptor_parse(std::string input) {
-    return call_python_function<const char*, bool>(
-        input.c_str(), input.size(), "descriptor_parse", create_string_object, convert_to_bool);
+        return call_python_function<const char*, bool>(
+            input.c_str(), input.size(), "descriptor_parse", create_string_object, convert_to_bool);
 }
 
 char* embit_psbt_parse(const uint8_t* data, size_t len) {
