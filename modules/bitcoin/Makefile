@@ -12,7 +12,16 @@ CXXFLAGS += -Wall -Wextra -std=c++20 \
             -I ./primitives \
             -I ./script
 
-# BOOST_LIB_DIR = /opt/homebrew/lib/
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S), Darwin)
+	BOOST_LIB_DIR ?= /opt/homebrew/lib/
+endif
+
+ifeq ($(UNAME_S), Linux)
+	BOOST_LIB_DIR ?= /usr/lib/
+endif
+
 BOOST_FILESYSTEM = $(BOOST_LIB_DIR)libboost_filesystem.a
 BOOST_SYSTEM = $(BOOST_LIB_DIR)libboost_system.a
 SECP256K1_LIB = ../secp256k1/.libs/libsecp256k1.a

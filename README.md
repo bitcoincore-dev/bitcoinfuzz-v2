@@ -92,7 +92,6 @@ export CXXFLAGS="$CXXFLAGS -DEMBIT"
 cd modules/bitcoin
 make
 export CXXFLAGS="$CXXFLAGS -DBITCOIN_CORE"
-export BOOST_LIB_DIR="path/to/boost/"
 ```
 
 ## Lightning modules:
