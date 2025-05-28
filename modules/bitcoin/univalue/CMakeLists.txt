@@ -2,6 +2,8 @@
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or https://opensource.org/license/mit/.
 
+cmake_minimum_required(VERSION 3.16)
+
 add_library(univalue STATIC EXCLUDE_FROM_ALL
   lib/univalue.cpp
   lib/univalue_get.cpp
