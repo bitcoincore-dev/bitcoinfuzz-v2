@@ -160,3 +160,5 @@ FUZZ=target_name ./bitcoinfuzz
 - LND: https://github.com/lightningnetwork/lnd/issues/9808
 - Core Lightning:  https://github.com/ElementsProject/lightning/pull/8282
 - btcd: https://github.com/btcsuite/btcd/issues/2372
+- bolts: https://github.com/lightning/bolts/pull/1264
+- rust-lightning: https://github.com/lightningdevkit/rust-lightning/pull/3814
