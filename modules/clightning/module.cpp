@@ -141,10 +141,10 @@ std::string clightning_des_offer(const std::string_view input) {
     }
 
     if (offer->offer_paths) {
-        for (size_t i = 0; offer->offer_paths[i] != NULL; i++) {
+        for (size_t i = 0; i < tal_count(offer->offer_paths); i++) {
             struct blinded_path_hop **blinded_path_hops = offer->offer_paths[i]->path;
 
-            for (size_t j = 0; blinded_path_hops[j] != NULL; j++) {
+            for (size_t j = 0; j < tal_count(blinded_path_hops); j++) {
                 result << ";PATH_" << i << "_HOP=";
                 struct pubkey pubkey = blinded_path_hops[j]->blinded_node_id;
                 uint8_t compressed[33];
