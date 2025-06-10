@@ -164,3 +164,4 @@ FUZZ=target_name ./bitcoinfuzz
 - rust-lightning: https://github.com/lightningdevkit/rust-lightning/pull/3814
 - LND: https://github.com/lightningnetwork/lnd/issues/9904
 - LND: https://github.com/lightningnetwork/lnd/issues/9915
+- Eclair: https://github.com/ACINQ/eclair/issues/3104
