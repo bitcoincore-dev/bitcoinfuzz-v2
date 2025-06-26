@@ -61,11 +61,15 @@ clightning() {
 }
 
 custom_mutator_bolt11() {
-    execute_in_module "modules/bolt11mutator" "$1"
+    execute_in_module "modules/custommutator" "$1"
+}
+
+custom_mutator_bolt12_offer() {
+    execute_in_module "modules/custommutator" "$1"
 }
 
 # Define the list of modules
-modules="bitcoin_core rust_bitcoin rust_miniscript btcd embit lnd ldk nlightning clightning custom_mutator_bolt11"
+modules="bitcoin_core rust_bitcoin rust_miniscript btcd embit lnd ldk nlightning clightning custom_mutator_bolt11 custom_mutator_bolt12_offer"
 
 # Full clean: runs `make clean` in all module directories
 full_clean() {
