@@ -1,9 +1,12 @@
 #include <optional>
 #include <span>
 
+#include "blockencodings.h"
 #include "chainparams.h"
 #include "consensus/validation.h"
+#include "core_io.h"
 #include "descriptor.h"
+#include "key_io.h"
 #include "module.h"
 #include "primitives/block.h"
 #include "primitives/transaction.h"
@@ -452,6 +455,29 @@ std::optional<std::string> Bitcoin::psbt_parse(std::span<const uint8_t> buffer) 
     }
 
     return result;
+}
+
+std::optional<int> Bitcoin::cmpctblocks_parse(std::span<const uint8_t> buffer) const
+{
+    DataStream ds{buffer};
+    CBlockHeaderAndShortTxIDs block_header_and_short_txids;
+
+    try {
+        ds >> block_header_and_short_txids;
+    } catch (const std::ios_base::failure& e) {
+        if (std::string(e.what()).find("Superflous witness record") != std::string::npos)
+            return -2;
+        return std::nullopt;
+    }
+
+    DataStream temp_ds{};
+    try {
+        temp_ds << block_header_and_short_txids;
+        return static_cast<int>(temp_ds.size());
+    } catch (const std::exception& e) {
+        return std::nullopt;
+    }
+
 }
 
 } // namespace module
