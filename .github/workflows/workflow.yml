@@ -184,7 +184,7 @@ jobs:
 
       - name: Test - psbt_parse
         run: |
-          export CXXFLAGS="-DBITCOIN_CORE -DRUST_BITCOIN -DBTCD"
+          export CXXFLAGS="-DBITCOIN_CORE -DRUST_BITCOIN -DBTCD -DEMBIT"
           make
           ASAN_OPTIONS=detect_leaks=0 FUZZ=psbt_parse ./bitcoinfuzz -runs=100
 

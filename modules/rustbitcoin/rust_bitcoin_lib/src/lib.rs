@@ -5,9 +5,10 @@ use std::slice;
 use std::str::{FromStr, Utf8Error};
 
 use bitcoin::address::Address;
-use bitcoin::consensus::{deserialize_partial, encode};
+use bitcoin::consensus::{deserialize_partial, encode, serialize};
 use bitcoin::p2p::address::AddrV2;
 use bitcoin::Block;
+use bitcoin::bip152::HeaderAndShortIds;
 
 unsafe fn str_to_c_string(input: &str) -> *mut c_char {
     CString::new(input).unwrap().into_raw()
@@ -191,6 +192,28 @@ pub unsafe extern "C" fn rust_bitcoin_addrv2(data: *const u8, len: usize) -> *mu
             return str_to_c_string(&res);
         }
     }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rust_bitcoin_cmpctblocks_parse(data: *const u8, len: usize) -> i32 {
+    // Safety: Ensure that the data pointer is valid for the given length
+    let data_slice = slice::from_raw_parts(data, len);
+
+    let res = deserialize_partial::<HeaderAndShortIds>(data_slice);
+
+    match res {
+        Ok((header_and_short_ids, _)) => {
+            let serialized_data = serialize(&header_and_short_ids);
+            serialized_data.len() as i32
+        },
+        Err(err) => {
+            if err.to_string().starts_with("unsupported segwit version") {
+                return -2;
+            }
+            return -1;
+        }
+    }
+    
 }
 
 unsafe fn c_str_to_str<'a>(input: *const c_char) -> Result<&'a str, Utf8Error> {

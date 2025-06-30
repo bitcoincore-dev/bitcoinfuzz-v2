@@ -58,5 +58,15 @@ namespace bitcoinfuzz
             free_c_string(result_ptr);
             return result;
         }
+
+        std::optional<int> Rustbitcoin::cmpctblocks_parse(std::span<const uint8_t> buffer) const
+        {
+            int32_t result = rust_bitcoin_cmpctblocks_parse(buffer.data(), buffer.size());
+            if (result == -1 || result == -2)
+            {
+                return result; // Return error codes as is
+            }
+            return result; // Return the count, or handle as needed
+        }
     }
 }
