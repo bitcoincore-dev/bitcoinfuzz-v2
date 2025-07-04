@@ -183,7 +183,7 @@ jobs:
 
       - name: Test - address_parse
         run: |
-          export CXXFLAGS="-DBITCOIN_CORE -DRUST_BITCOIN"
+          export CXXFLAGS="-DBITCOIN_CORE -DRUST_BITCOIN -DBTCD"
           make
           FUZZ=address_parse ./bitcoinfuzz -runs=100
 

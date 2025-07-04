@@ -90,6 +90,7 @@ extern char* BTCDScriptAsm(ByteArray scriptData);
 extern char* BTCDDesBlock(ByteArray scriptData);
 extern void BTCDFreeString(char* ptr);
 extern char* BTCDParsePSBT(ByteArray data);
+extern char* BTCDAddress(ByteArray data);
 
 #ifdef __cplusplus
 }

@@ -185,7 +185,7 @@ If you prefer, you can still build the modules manually. Below are the steps for
     To install the `embit` library, you can use the following command:
     ```bash
     cd modules/embit
-    pip install -r /requirements.txt
+    pip install -r ./requirements.txt
     ```
 
     ```bash
