@@ -22,6 +22,7 @@ import (
 	"github.com/btcsuite/btcd/addrmgr"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/btcutil/psbt"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
@@ -198,6 +199,36 @@ func BTCDParsePSBT(data C.ByteArray) *C.char {
 	}
 
 	return C.CString(result.String())
+}
+
+//export BTCDAddress
+func BTCDAddress(data C.ByteArray) *C.char {
+
+	addrBytes := C.GoBytes(unsafe.Pointer(data.data), data.length)
+	addrStr := string(addrBytes)
+
+	addr, err := btcutil.DecodeAddress(addrStr, &chaincfg.MainNetParams)
+	if err != nil {
+		return C.CString("INVALID")
+	}
+
+	var prefix string
+	switch addr.(type) {
+	case *btcutil.AddressPubKeyHash:
+		prefix = "PKH:"
+	case *btcutil.AddressScriptHash:
+		prefix = "SH:"
+	case *btcutil.AddressWitnessPubKeyHash:
+		prefix = "WPKH:"
+	case *btcutil.AddressWitnessScriptHash:
+		prefix = "WSH:"
+	case *btcutil.AddressTaproot:
+		prefix = "TR:"
+	default:
+		prefix = "UNK:"
+	}
+
+	return C.CString(prefix + addr.EncodeAddress())
 }
 
 func main() {}
