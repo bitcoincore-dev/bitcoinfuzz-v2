@@ -40,13 +40,20 @@ std::string hex_encode(const unsigned char* data, size_t len) {
     return oss.str();
 }
 
-std::string clightning_des_invoice(const std::string& input) {
+std::optional<std::string> clightning_des_invoice(const std::string& input) {
     char* fail = nullptr;
     const struct chainparams* params = chainparams_for_network("bitcoin");
 
     struct bolt11 *invoice = bolt11_decode(tmpctx, input.c_str(), nullptr, nullptr, params, &fail);
 
     if (!invoice) {
+        // Handle invoices without payment secrets by returning null
+        // This is needed because LND don't require payment secrets,
+        // and we need to maintain compatibility with that implementation
+        if (strcmp(fail, "Missing required payment secret (s field)") == 0) {
+            clean_tmpctx();
+            return std::nullopt;
+        }
         clean_tmpctx();
         return "";
     }
