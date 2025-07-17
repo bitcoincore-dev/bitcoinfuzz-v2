@@ -77,8 +77,6 @@ pub unsafe extern "C" fn ldk_des_invoice(input: *const std::os::raw::c_char) -> 
                     .as_str(),
             );
 
-            result.push_str(";MIN_FINAL_CLTV_EXPIRY_DELTA=");
-            result.push_str(&invoice.min_final_cltv_expiry_delta().to_string());
 
             result.push_str(";TIMESTAMP=");
             result.push_str(

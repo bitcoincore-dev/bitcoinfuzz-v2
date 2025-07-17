@@ -87,9 +87,6 @@ func LndDeserializeInvoice(cInvoiceStr *C.char) *C.char {
 	sb.WriteString(";EXPIRY=")
 	sb.WriteString(fmt.Sprintf("%d", uint64(invoice.Expiry().Nanoseconds())/1000000000))
 
-	sb.WriteString(";MIN_FINAL_CLTV_EXPIRY_DELTA=")
-	sb.WriteString(fmt.Sprintf("%d", invoice.MinFinalCLTVExpiry()))
-
 	sb.WriteString(";TIMESTAMP=")
 	sb.WriteString(fmt.Sprintf("%d", invoice.Timestamp.Unix()))
 
