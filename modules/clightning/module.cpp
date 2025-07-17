@@ -139,6 +139,11 @@ std::optional<std::string> clightning_des_invoice(const std::string& input) {
 
     result << ";MIN_CLTV=" << invoice->min_final_cltv_expiry;
 
+    result << ";FEATURES=";
+    if (invoice->features) {
+        result << hex_encode(invoice->features, tal_bytelen(invoice->features));
+    }
+
     clean_tmpctx();
     return result.str();
 }

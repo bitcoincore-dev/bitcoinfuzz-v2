@@ -127,6 +127,13 @@ pub unsafe extern "C" fn ldk_des_invoice(input: *const std::os::raw::c_char) -> 
             result.push_str(";MIN_CLTV=");
             result.push_str(&invoice.min_final_cltv_expiry_delta().to_string());
 
+            result.push_str(";FEATURES=");
+            if invoice.features().is_some() {
+                let mut flags = invoice.features().unwrap().le_flags().to_vec();
+                flags.reverse();
+                result.push_str(&flags.to_hex_string(Case::Lower));
+            }
+
             str_to_c_string(&result)
         }
         // Handle invoices without payment secrets by returning null
