@@ -5,7 +5,6 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-
     strategy:
       fail-fast: false
       matrix:
@@ -16,6 +15,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Checkout corpora repo
+        uses: actions/checkout@v4
+        with:
+          repository: bitcoinfuzz/corpora
+          path: corpora
 
       - name: Install rust-toolchain
         uses: actions-rs/toolchain@v1.0.6
@@ -41,23 +46,13 @@ jobs:
           pip install -r modules/embit/requirements.txt
           pip install mako
 
-      - name: Install LLVM and Clang - Ubuntu
-        if: matrix.os == 'ubuntu-24.04'
-        run: |
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh 18
-          sudo ln -sfT clang++-18 /usr/bin/clang++
-          sudo ln -sfT clang-18 /usr/bin/clang
-        shell: bash
-
       - name: Install LLVM and Clang - macOS
         if: matrix.os == 'macos-14'
         run: |
           brew install llvm@18
           echo "$(brew --prefix llvm@18)/bin" >> $GITHUB_PATH
-          export PATH="$(brew --prefix llvm@18)/bin:$PATH"
-        shell: bash
+          echo "CC=$(brew --prefix llvm@18)/bin/clang" >> $GITHUB_ENV
+          echo "CXX=$(brew --prefix llvm@18)/bin/clang++" >> $GITHUB_ENV
 
       - name: Install build dependencies - macOS
         if: matrix.os == 'macos-14'
@@ -141,79 +136,88 @@ jobs:
         run: |
           cd modules/clightning && make
 
-      - name: Test - script
+      - name: Cache build artifacts
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            modules/
+            bitcoinfuzz
+            NBitcoin.CppBridge.so
+            NBitcoin.CppBridge.dylib
+          key: bitcoinfuzz-build-${{ matrix.os }}-${{ github.sha }}
+
+  test:
+    needs: build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14]
+        test:
+          - corpus: "script"
+            target: "script"
+            cxxflags: "-DBITCOIN_CORE -DRUST_BITCOIN"
+            asan_options: "detect_container_overflow=0"
+          - corpus: "deserialize_block"
+            target: "deserialize_block"
+            cxxflags: "-DBITCOIN_CORE -DRUST_BITCOIN -DBTCD"
+            asan_options: ""
+          - corpus: "script_eval"
+            target: "script_eval"
+            cxxflags: "-DBITCOIN_CORE -DBTCD"
+            asan_options: ""
+          - corpus: "descriptor_parse_clean"
+            target: "descriptor_parse"
+            cxxflags: "-DBITCOIN_CORE -DRUST_MINISCRIPT"
+            asan_options: "detect_leaks=0:detect_container_overflow=0"
+          - corpus: "miniscript_parse_clean"
+            target: "miniscript_parse"
+            cxxflags: "-DBITCOIN_CORE -DRUST_MINISCRIPT"
+            asan_options: "detect_leaks=0:detect_container_overflow=0"
+          - corpus: "script_asm"
+            target: "script_asm"
+            cxxflags: "-DBITCOIN_CORE -DBTCD"
+            asan_options: ""
+          - corpus: "address_parse"
+            target: "address_parse"
+            cxxflags: "-DBITCOIN_CORE -DRUST_BITCOIN -DBTCD"
+            asan_options: "detect_container_overflow=0"
+          - corpus: "psbt_parse"
+            target: "psbt_parse"
+            cxxflags: "-DBITCOIN_CORE -DRUST_BITCOIN -DBTCD"
+            asan_options: "detect_leaks=0:detect_container_overflow=0"
+          - corpus: "cmpctblocks_parse"
+            target: "cmpctblocks_parse"
+            cxxflags: "-DBITCOIN_CORE -DRUST_BITCOIN"
+            asan_options: "detect_leaks=0:detect_container_overflow=0"
+          - corpus: "parse_p2p_message"
+            target: "parse_p2p_message"
+            cxxflags: "-DRUST_BITCOIN -DBTCD -DCUSTOM_MUTATOR_P2P_MESSAGE"
+            asan_options: "detect_leaks=0:detect_container_overflow=0"
+          - corpus: "deserialize_invoice_clean"
+            target: "deserialize_invoice"
+            cxxflags: "-DLDK -DLND -DCLIGHTNING -DCUSTOM_MUTATOR_BOLT11"
+            asan_options: "detect_leaks=0:detect_container_overflow=0"
+            pre_build: "(cd ./modules/bitcoin && make clean)"
+          - corpus: "deserialize_offer"
+            target: "deserialize_offer"
+            cxxflags: "-DLDK -DCLIGHTNING -DCUSTOM_MUTATOR_BOLT12_OFFER"
+            asan_options: "detect_leaks=0:detect_container_overflow=0"
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-test-env
+        with:
+          os: ${{ matrix.os }}
+
+      - name: Pre-build step
+        if: matrix.test.pre_build != ''
+        timeout-minutes: 5
+        run: ${{ matrix.test.pre_build }}
+
+      - name: Test - ${{ matrix.test.target }}
         timeout-minutes: 5
         run: |
-          export CXXFLAGS="-DBITCOIN_CORE -DRUST_BITCOIN"
-          make
-          FUZZ=script ./bitcoinfuzz -runs=100
-
-      - name: Test - deserialize_block
-        timeout-minutes: 5
-        run: |
-          export CXXFLAGS="-DBITCOIN_CORE -DRUST_BITCOIN -DBTCD"
-          make
-          FUZZ=deserialize_block ./bitcoinfuzz -runs=100
-
-      - name: Test - script_eval
-        timeout-minutes: 5
-        run: |
-          export CXXFLAGS="-DBITCOIN_CORE -DBTCD"
-          make
-          FUZZ=script_eval ./bitcoinfuzz -runs=100
-
-      - name: Test - descriptor_parse
-        timeout-minutes: 5
-        run: |
-          export CXXFLAGS="-DBITCOIN_CORE -DRUST_MINISCRIPT -DNBITCOIN"
-          make
-          ASAN_OPTIONS=detect_leaks=0 FUZZ=descriptor_parse ./bitcoinfuzz -runs=100
-
-      - name: Test - miniscript_parse
-        run: |
-          export CXXFLAGS="-DBITCOIN_CORE -DRUST_MINISCRIPT -DNBITCOIN"
-          make
-          ASAN_OPTIONS=detect_leaks=0 FUZZ=miniscript_parse ./bitcoinfuzz -runs=0
-
-      - name: Test - script_asm
-        run: |
-          export CXXFLAGS="-DBITCOIN_CORE -DBTCD"
-          make
-          FUZZ=script_asm ./bitcoinfuzz -runs=0
-
-      - name: Test - address_parse
-        run: |
-          export CXXFLAGS="-DBITCOIN_CORE -DRUST_BITCOIN -DBTCD"
-          make
-          FUZZ=address_parse ./bitcoinfuzz -runs=100
-
-      - name: Test - psbt_parse
-        run: |
-          export CXXFLAGS="-DBITCOIN_CORE -DRUST_BITCOIN -DBTCD -DEMBIT"
-          make
-          ASAN_OPTIONS=detect_leaks=0 FUZZ=psbt_parse ./bitcoinfuzz -runs=100
-
-      - name: Test - cmpctblocks_parse
-        run: |
-          export CXXFLAGS="-DBITCOIN_CORE -DRUST_BITCOIN"
-          make
-          FUZZ=cmpctblocks_parse ./bitcoinfuzz -runs=100
-
-      - name: Test - parse_p2p_message
-        run: |
-          export CXXFLAGS="-DRUST_BITCOIN -DBTCD -DCUSTOM_MUTATOR_P2P_MESSAGE"
-          make
-          ASAN_OPTIONS=detect_leaks=0 FUZZ=parse_p2p_message ./bitcoinfuzz -runs=100
-
-      - name: Test - deserialize_invoice
-        run: |
-          export CXXFLAGS="-DLDK -DLND -DCLIGHTNING -DCUSTOM_MUTATOR_BOLT11"
-          (cd ./modules/bitcoin && make clean)
-          make
-          ASAN_OPTIONS=detect_leaks=0 FUZZ=deserialize_invoice ./bitcoinfuzz -runs=100
-
-      - name: Test - deserialize_offer
-        run: |
-          export CXXFLAGS="-DLDK -DCLIGHTNING -DCUSTOM_MUTATOR_BOLT12_OFFER"
-          make
-          ASAN_OPTIONS=detect_leaks=0 FUZZ=deserialize_offer ./bitcoinfuzz -runs=100
+          FUZZ=${{ matrix.test.target }} ./.github/scripts/run-fuzz.sh "${{ matrix.test.corpus }}" "${{ matrix.test.target }}" "${{ matrix.test.cxxflags }}" "${{ matrix.test.asan_options }}"
