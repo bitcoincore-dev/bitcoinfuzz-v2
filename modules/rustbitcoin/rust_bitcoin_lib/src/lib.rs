@@ -1,3 +1,4 @@
+use bitcoin::absolute::Decodable;
 use bitcoin::address::Address;
 use bitcoin::bip152::HeaderAndShortIds;
 use bitcoin::block::BlockUncheckedExt;
@@ -5,7 +6,8 @@ use bitcoin::consensus::{deserialize_partial, encode, serialize};
 use bitcoin::script::{ScriptBuf, ScriptExt};
 use bitcoin::Block;
 use p2p::address::AddrV2;
-use p2p::message::AddrV2Payload;
+use p2p::message::{AddrV2Payload, RawNetworkMessage};
+use p2p::Magic;
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::os::raw::c_char;
@@ -52,7 +54,10 @@ pub unsafe extern "C" fn rust_bitcoin_des_block(
             if err.to_string().starts_with("unsupported SegWit version") {
                 return str_to_c_string("skip error");
             }
-            if err.to_string().starts_with("parse failed: amount is greater than Amount::MAX_MONEY") {
+            if err
+                .to_string()
+                .starts_with("parse failed: amount is greater than Amount::MAX_MONEY")
+            {
                 return str_to_c_string("skip error");
             }
             return str_to_c_string("0");
@@ -78,6 +83,30 @@ pub unsafe extern "C" fn rust_bitcoin_script(data: *const u8, len: usize) -> *mu
             final_res.push_str(if s.0.is_push_only() { "1" } else { "0" });
             str_to_c_string(&final_res)
         }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rust_bitcoin_parse_p2p_message(
+    data: *const u8,
+    len: usize,
+) -> *mut c_char {
+    let mut data_slice = slice::from_raw_parts(data, len);
+
+    let message = match RawNetworkMessage::consensus_decode(&mut data_slice) {
+        Ok(m) => m,
+        Err(encode::Error::Parse(encode::ParseError::UnsupportedSegwitFlag(_))) => {
+            return std::ptr::null_mut()
+        }
+        Err(_) => return str_to_c_string("0"),
+    };
+    if message.magic() != &Magic::BITCOIN {
+        return str_to_c_string("0");
+    }
+    let cmd = message.cmd();
+    match cmd {
+        "unknown" => str_to_c_string("0"),
+        _ => str_to_c_string(cmd),
     }
 }
 

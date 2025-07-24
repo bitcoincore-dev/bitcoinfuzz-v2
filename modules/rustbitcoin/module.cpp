@@ -67,5 +67,14 @@ namespace bitcoinfuzz
             }
             return result; // Return the count, or handle as needed
         }
+        
+        std::optional<std::string> Rustbitcoin::parse_p2p_message(std::span<const uint8_t> buffer) const
+        {
+            auto message{rust_bitcoin_parse_p2p_message(buffer.data(), buffer.size())};
+            if (message == nullptr) return std::nullopt;
+            std::string result(message);
+            free_c_string(message);
+            return result;
+        }
     }
 }
