@@ -13,6 +13,8 @@ static JavaVM* jvm = nullptr;
 static jclass decoderClass = nullptr;
 static jmethodID decodeMethod = nullptr;
 
+constexpr const char* LIB_DIR_PATH = LIB_DIR;
+
 static std::string cached_classpath;
 
 static const std::string build_classpath() {
@@ -23,7 +25,7 @@ static const std::string build_classpath() {
     bool first = true;
     
     try {
-        for (const auto& entry : fs::directory_iterator("./modules/eclair/lib")) {
+        for (const auto& entry : fs::directory_iterator(LIB_DIR_PATH)) {
             auto ext = entry.path().extension();
             if (ext == ".jar" || ext == ".class") {
                 if (!first) cp << ":";
