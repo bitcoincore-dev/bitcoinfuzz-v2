@@ -14,6 +14,9 @@ CXXFLAGS += -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/$(OS_NAME)
 ROOT_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/../..)
 ECLAIR_DIR := $(ROOT_DIR)/external/eclair
 
+LIB_DIR = $(shell pwd)/lib
+CXXFLAGS += -DLIB_DIR=\"$(LIB_DIR)\"
+
 all: module.a
 
 lib: eclair.zip
