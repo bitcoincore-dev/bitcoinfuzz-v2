@@ -291,3 +291,4 @@ Once the modules are compiled, you can compile `bitcoinfuzz` an execute it:
 - NBitcoin: https://github.com/MetacoSA/NBitcoin/issues/1278
 - lightning-kmp: https://github.com/ACINQ/lightning-kmp/issues/799
 - lightning-kmp: https://github.com/ACINQ/lightning-kmp/pull/801
+- bitcoin-kmp: https://github.com/ACINQ/bitcoin-kmp/issues/157
