@@ -36,7 +36,7 @@ require (
 	github.com/docker/docker v28.0.4+incompatible // indirect
 	github.com/fergusstrange/embedded-postgres v1.30.0 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
-	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/golang-migrate/migrate/v4 v4.18.2 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/btree v1.1.3 // indirect
