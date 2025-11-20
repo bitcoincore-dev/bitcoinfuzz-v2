@@ -1,6 +1,6 @@
 module btcd_wrapper
 
-go 1.23.2
+go 1.24.0
 
 toolchain go1.24.2
 
@@ -16,8 +16,8 @@ require (
 	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f // indirect
 	github.com/decred/dcrd/crypto/blake256 v1.0.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
-	golang.org/x/crypto v0.25.0 // indirect
-	golang.org/x/sys v0.22.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
 )
 
 replace github.com/btcsuite/btcd => github.com/brunoerg/btcd v0.0.0-20250716133936-cfb1b0dd950e
